@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+} 
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  phone        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Student {
+  id        Int            @id @default(autoincrement())
+  firstName String
+  lastName  String
+  phone     String
+  birthDate DateTime?
+  joinedAt  DateTime       @default(now())
+  status    String         @default("ACTIVE") // "ACTIVE", "INACTIVE"
+  groups    GroupStudent[]
+  attendances Attendance[]
+}
+
+model Teacher {
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  phone     String
+  subject   String
+  groups    Group[]
+}
+
+model Room {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  capacity  Int
+  schedules Schedule[]
+}
+
+model Course {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  groups      Group[]
+}
+
+model Group {
+  id        Int            @id @default(autoincrement())
+  name      String
+  courseId  Int
+  teacherId Int
+  startDate DateTime
+  endDate   DateTime
+  course    Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacher   Teacher        @relation(fields: [teacherId], references: [id])
+  students  GroupStudent[]
+  schedules Schedule[]
+  attendances Attendance[]
+}
+
+// Join table for many-to-many relationship between Student and Group
+model GroupStudent {
+  groupId   Int
+  studentId Int
+  joinedAt  DateTime @default(now())
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, studentId])
+}
+
+model Schedule {
+  id           Int    @id @default(autoincrement())
+  groupId      Int
+  roomId       Int
+  dayOfWeek    String // "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"
+  startTime    String // "14:00"
+  endTime      String // "15:30"
+  startMinutes Int    // Minutes since midnight (e.g. 14*60 = 840)
+  endMinutes   Int    // Minutes since midnight (e.g. 15*60 + 30 = 930)
+  group        Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  room         Room   @relation(fields: [roomId], references: [id])
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  groupId   Int
+  date      DateTime // Class date (without time)
+  status    String   // "kelgan", "kelmagan", "sababli"
+  comment   String?
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, groupId, date])
+}
