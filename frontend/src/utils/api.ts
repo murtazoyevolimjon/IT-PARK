@@ -2,14 +2,27 @@ import axios from 'axios';
 
 const getApiBaseUrl = (): string => {
   let envUrl = import.meta.env.VITE_API_URL;
+  
   if (!envUrl) {
+    // In production (Vercel domain), fallback to relative '/api' so Vercel rewrites proxy it directly to AWS
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      return '/api';
+    }
     return 'http://localhost:3000/api';
   }
 
-  // Sanitize: trim whitespace & strip trailing slashes
-  envUrl = envUrl.trim().replace(/\/+$/, '');
+  // Sanitize: trim whitespace
+  envUrl = envUrl.trim();
 
-  // Ensure /api suffix is present
+  // If envUrl is relative path "/api" or "/api/"
+  if (envUrl === '/api' || envUrl === '/api/') {
+    return '/api';
+  }
+
+  // Strip trailing slashes
+  envUrl = envUrl.replace(/\/+$/, '');
+
+  // Ensure /api suffix is present if not already ending with /api
   if (!envUrl.endsWith('/api')) {
     envUrl = `${envUrl}/api`;
   }
@@ -19,7 +32,7 @@ const getApiBaseUrl = (): string => {
 
 const api = axios.create({
   baseURL: getApiBaseUrl(),
-  timeout: 15000, // 15 seconds timeout to prevent infinite loading
+  timeout: 15000, // 15 seconds timeout
   headers: {
     'Content-Type': 'application/json',
   },
