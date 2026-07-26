@@ -88,24 +88,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenMobileMenu }) => {
     );
   }
 
-  const { stats, todaySchedules, attendanceTrend, roomOccupancy } = data;
+  const stats = data?.stats || {};
+  const todaySchedules = data?.todaySchedules || [];
+  const attendanceTrend = data?.attendanceTrend || [];
+  const roomOccupancy = data?.roomOccupancy || [];
 
-  // Stats Card Configs
+  // Stats Card Configs with safe fallback defaults
   const statCards = [
-    { label: 'Jami O\'quvchilar', value: stats.totalStudents, sub: 'Faol o\'quvchilar', icon: Users, color: 'from-blue-600/20 to-indigo-600/20 text-blue-400', glow: 'glow-primary' },
-    { label: 'Jami O\'qituvchilar', value: stats.totalTeachers, sub: 'Faol o\'qituvchilar', icon: UserSquare2, color: 'from-purple-600/20 to-pink-600/20 text-purple-400', glow: 'glow-primary' },
-    { label: 'Jami Xonalar', value: stats.totalRooms, sub: 'Mavjud dars xonalari', icon: Home, color: 'from-emerald-600/20 to-teal-600/20 text-emerald-400', glow: 'glow-success' },
-    { label: 'Faol Guruhlar', value: stats.activeGroups, sub: 'O\'tilayotgan kurslar', icon: BookOpen, color: 'from-amber-600/20 to-orange-600/20 text-amber-400', glow: 'glow-primary' },
+    { label: 'Jami O\'quvchilar', value: stats?.totalStudents ?? 0, sub: 'Faol o\'quvchilar', icon: Users, color: 'from-blue-600/20 to-indigo-600/20 text-blue-400', glow: 'glow-primary' },
+    { label: 'Jami O\'qituvchilar', value: stats?.totalTeachers ?? 0, sub: 'Faol o\'qituvchilar', icon: UserSquare2, color: 'from-purple-600/20 to-pink-600/20 text-purple-400', glow: 'glow-primary' },
+    { label: 'Jami Xonalar', value: stats?.totalRooms ?? 0, sub: 'Mavjud dars xonalari', icon: Home, color: 'from-emerald-600/20 to-teal-600/20 text-emerald-400', glow: 'glow-success' },
+    { label: 'Faol Guruhlar', value: stats?.activeGroups ?? 0, sub: 'O\'tilayotgan kurslar', icon: BookOpen, color: 'from-amber-600/20 to-orange-600/20 text-amber-400', glow: 'glow-primary' },
   ];
 
   // Chart Data: Attendance Trend
-  const trendLabels = attendanceTrend.map((t: any) => t.date);
+  const trendLabels = attendanceTrend.map((t: any) => t?.date || '');
   const trendData = {
     labels: trendLabels.length ? trendLabels : ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'],
     datasets: [
       {
         label: 'Kelganlar',
-        data: attendanceTrend.map((t: any) => t.present),
+        data: attendanceTrend.map((t: any) => t?.present || 0),
         borderColor: '#10b981',
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
         fill: true,
@@ -113,7 +116,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenMobileMenu }) => {
       },
       {
         label: 'Kelmaganlar',
-        data: attendanceTrend.map((t: any) => t.absent),
+        data: attendanceTrend.map((t: any) => t?.absent || 0),
         borderColor: '#ef4444',
         backgroundColor: 'rgba(239, 68, 68, 0.05)',
         fill: true,
@@ -124,11 +127,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenMobileMenu }) => {
 
   // Chart Data: Room Occupancy
   const occupancyData = {
-    labels: roomOccupancy.map((r: any) => r.name),
+    labels: roomOccupancy.map((r: any) => r?.name || ''),
     datasets: [
       {
         label: 'Haftalik darslar soni',
-        data: roomOccupancy.map((r: any) => r.lessonCount),
+        data: roomOccupancy.map((r: any) => r?.lessonCount || 0),
         backgroundColor: 'rgba(99, 102, 241, 0.65)',
         borderColor: '#6366f1',
         borderWidth: 1,
@@ -189,7 +192,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenMobileMenu }) => {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <span className="text-4xl font-black text-white">{stats.unpaidActiveStudents || 0}</span>
+              <span className="text-4xl font-black text-white">{stats?.unpaidActiveStudents ?? 0}</span>
               <p className="text-xs text-red-400 font-semibold mt-0.5">Ta'sirchan ko'rsatkich</p>
             </div>
             <div className="w-16 h-16 rounded-full border-4 border-red-950/40 bg-red-950/20 flex items-center justify-center relative overflow-hidden">
@@ -254,18 +257,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenMobileMenu }) => {
                 </thead>
                 <tbody className="divide-y divide-gray-800/40">
                   {todaySchedules.map((sch: any) => (
-                    <tr key={sch.id} className="hover:bg-gray-800/20 transition-all">
+                    <tr key={sch?.id} className="hover:bg-gray-800/20 transition-all">
                       <td className="py-4 px-4 font-semibold text-white flex items-center gap-2">
                         <Clock size={14} className="text-indigo-400" />
-                        <span>{sch.startTime} - {sch.endTime}</span>
+                        <span>{sch?.startTime} - {sch?.endTime}</span>
                       </td>
-                      <td className="py-4 px-4 text-indigo-400 font-medium">{sch.group.name}</td>
-                      <td className="py-4 px-4 text-gray-300">{sch.group.course.name}</td>
-                      <td className="py-4 px-4">{sch.group.teacher.firstName} {sch.group.teacher.lastName}</td>
+                      <td className="py-4 px-4 text-indigo-400 font-medium">{sch?.group?.name || '-'}</td>
+                      <td className="py-4 px-4 text-gray-300">{sch?.group?.course?.name || '-'}</td>
+                      <td className="py-4 px-4">{sch?.group?.teacher?.firstName || ''} {sch?.group?.teacher?.lastName || ''}</td>
                       <td className="py-4 px-4 font-semibold text-white">
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-950/30 border border-indigo-900/40 text-indigo-300 rounded-lg text-xs">
                           <MapPin size={12} />
-                          <span>{sch.room.name}</span>
+                          <span>{sch?.room?.name || '-'}</span>
                         </span>
                       </td>
                     </tr>
