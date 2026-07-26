@@ -27,10 +27,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       onLoginSuccess(access_token, user);
       navigate('/');
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || 
-        'Tizimga kirishda xatolik yuz berdi. Iltimos, qaytadan urinib ko\'ring.'
-      );
+      if (err.response?.status === 405) {
+        setError('405 Method Not Allowed: POST so\'rovi rad etildi. Vercel proxy yoki AWS CORS sozlamalarini tekshiring.');
+      } else if (err.response?.status === 500) {
+        setError('500 Internal Server Error: Backend serverda ichki xatolik yuz berdi.');
+      } else {
+        setError(
+          err.response?.data?.message || 
+          'Tizimga kirishda xatolik yuz berdi. Iltimos, qaytadan urinib ko\'ring.'
+        );
+      }
     } finally {
       setLoading(false);
     }
