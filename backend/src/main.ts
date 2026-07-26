@@ -11,7 +11,7 @@ async function bootstrap() {
 
   // 1. Enable CORS for React frontend
   app.enableCors({
-    origin: '*', // For development, allow all origins.
+    origin: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

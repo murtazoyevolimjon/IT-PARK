@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTeacherDto {
@@ -19,6 +20,7 @@ export class CreateTeacherDto {
 
   @ApiProperty({ description: 'Qo\'shimcha telefon raqami (ixtiyoriy)', example: '+998909998877', required: false })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsString()
   secondPhone?: string;
 
@@ -46,6 +48,7 @@ export class UpdateTeacherDto {
 
   @ApiProperty({ description: 'Qo\'shimcha telefon raqami (ixtiyoriy)', example: '+998909998877', required: false })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsString()
   secondPhone?: string;
 

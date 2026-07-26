@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsString, IsOptional, IsDateString, IsBoolean } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateStudentDto {
@@ -19,11 +20,13 @@ export class CreateStudentDto {
 
   @ApiProperty({ description: 'Qo\'shimcha telefon raqami (ixtiyoriy)', example: '+998909998877', required: false })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsString()
   secondPhone?: string;
 
   @ApiProperty({ description: 'Tug\'ilgan sana (ixtiyoriy)', example: '2005-08-15', required: false })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsDateString({}, { message: 'Tug\'ilgan sana yaroqli sana formati bo\'lishi shart' })
   birthDate?: string;
 

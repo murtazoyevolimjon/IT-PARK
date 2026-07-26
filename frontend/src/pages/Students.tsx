@@ -119,13 +119,18 @@ export const Students: React.FC = () => {
     if (submitting) return;
     try {
       setSubmitting(true);
+      const payload = {
+        ...formData,
+        birthDate: formData.birthDate ? formData.birthDate : undefined,
+        secondPhone: formData.secondPhone ? formData.secondPhone : undefined,
+      };
       if (editingStudent) {
-        await api.put(`/students/${editingStudent.id}`, formData);
+        await api.put(`/students/${editingStudent.id}`, payload);
       } else {
-        await api.post('/students', formData);
+        await api.post('/students', payload);
       }
       setIsCrudModalOpen(false);
-      fetchStudents();
+      fetchStudents(statusFilter);
     } catch (err: any) {
       alert(err.response?.data?.message || 'Saqlashda xatolik yuz berdi');
     } finally {
@@ -137,7 +142,7 @@ export const Students: React.FC = () => {
     if (!confirm('Haqiqatan ham ushbu o\'quvchini o\'chirib tashlamoqchimisiz?')) return;
     try {
       await api.delete(`/students/${id}`);
-      fetchStudents();
+      fetchStudents(statusFilter);
     } catch (err: any) {
       alert(err.response?.data?.message || 'O\'chirishda xatolik yuz berdi');
     }
