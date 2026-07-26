@@ -23,9 +23,15 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
     try {
       const response = await api.post('/auth/login', { phone, password });
-      const { access_token, user } = response.data;
-      onLoginSuccess(access_token, user);
-      navigate('/');
+      const token = response.data?.access_token || response.data?.token || response.data?.accessToken;
+      const user = response.data?.user || { phone, name: 'Admin' };
+
+      if (token) {
+        onLoginSuccess(token, user);
+        navigate('/');
+      } else {
+        setError('Tizimga kirishda avtorizatsiya tokeni olinmadi.');
+      }
     } catch (err: any) {
       if (err.response?.status === 405) {
         setError('405 Method Not Allowed: POST so\'rovi rad etildi. Vercel proxy yoki AWS CORS sozlamalarini tekshiring.');

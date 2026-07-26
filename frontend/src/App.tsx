@@ -9,28 +9,27 @@ import { Courses } from './pages/Courses';
 import { Schedule } from './pages/Schedule';
 import { Attendance } from './pages/Attendance';
 import { Sidebar } from './components/Sidebar';
+import { safeJsonParse } from './utils/safeJsonParse';
 
 function App() {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [user, setUser] = useState<any>(null);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+  const [user, setUser] = useState<any>(() => safeJsonParse(localStorage.getItem('user'), null));
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error(e);
-      }
-    }
+    const savedUser = safeJsonParse(localStorage.getItem('user'), null);
+    setUser(savedUser);
   }, [token]);
 
   const handleLoginSuccess = (newToken: string, newUser: any) => {
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    setToken(newToken);
-    setUser(newUser);
+    if (newToken) {
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+    }
+    if (newUser) {
+      localStorage.setItem('user', JSON.stringify(newUser));
+      setUser(newUser);
+    }
   };
 
   const handleLogout = () => {
