@@ -1,7 +1,24 @@
 import axios from 'axios';
 
+const getApiBaseUrl = (): string => {
+  let envUrl = import.meta.env.VITE_API_URL;
+  if (!envUrl) {
+    return 'http://localhost:3000/api';
+  }
+
+  // Sanitize: trim whitespace & strip trailing slashes
+  envUrl = envUrl.trim().replace(/\/+$/, '');
+
+  // Ensure /api suffix is present
+  if (!envUrl.endsWith('/api')) {
+    envUrl = `${envUrl}/api`;
+  }
+
+  return envUrl;
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+  baseURL: getApiBaseUrl(),
   timeout: 15000, // 15 seconds timeout to prevent infinite loading
   headers: {
     'Content-Type': 'application/json',
@@ -42,7 +59,7 @@ api.interceptors.response.use(
       } else {
         error.message = 'Server bilan aloqa o\'rnatilmadi (Network Error). Backend server ishlayotganini va tarmoqni tekshiring.';
       }
-      // Create a mock response structure to satisfy UI error message extraction (err.response.data.message)
+      // Create a mock response structure to satisfy UI error message extraction
       error.response = {
         status: 0,
         statusText: 'Network Error',
