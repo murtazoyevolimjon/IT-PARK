@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, Query, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Patch, Param, Delete, Query, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -14,7 +14,7 @@ export class StudentsController {
 
   @Get()
   @ApiOperation({ summary: 'Barcha o\'quvchilarni olish' })
-  @ApiQuery({ name: 'status', required: false, description: 'Faqat ACTIVE yoki INACTIVE o\'quvchilarni olish' })
+  @ApiQuery({ name: 'status', required: false, description: 'ACTIVE, INACTIVE, unpaid yoki ARCHIVED bo\'yicha saralash' })
   findAll(@Query('status') status?: string) {
     return this.studentsService.findAll(status);
   }
@@ -38,9 +38,19 @@ export class StudentsController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'O\'quvchini o\'chirish' })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.studentsService.remove(id);
+  @ApiOperation({ summary: 'O\'quvchini arxivga o\'chirish yoki butkul yo\'qotish' })
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('permanent') permanent?: string,
+  ) {
+    const isPermanent = permanent === 'true';
+    return this.studentsService.remove(id, isPermanent);
+  }
+
+  @Patch(':id/restore')
+  @ApiOperation({ summary: 'Arxivdagi o\'quvchini qayta tiklash' })
+  restore(@Param('id', ParseIntPipe) id: number) {
+    return this.studentsService.restore(id);
   }
 
   @Post(':id/groups')

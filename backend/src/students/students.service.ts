@@ -8,14 +8,19 @@ export class StudentsService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(status?: string) {
-    let whereClause: any = undefined;
+    let whereClause: any = { status: { not: 'ARCHIVED' } };
+
     if (status === 'unpaid') {
       whereClause = {
         isPaid: false,
-        status: 'ACTIVE',
+        status: { not: 'ARCHIVED' },
       };
-    } else if (status) {
+    } else if (status === 'ARCHIVED') {
+      whereClause = { status: 'ARCHIVED' };
+    } else if (status && status !== 'all') {
       whereClause = { status };
+    } else if (status === 'all') {
+      whereClause = { status: { not: 'ARCHIVED' } };
     }
 
     return this.prisma.student.findMany({
@@ -71,13 +76,11 @@ export class StudentsService {
   }
 
   async update(id: number, updateStudentDto: UpdateStudentDto) {
-    // Check existence
     await this.findOne(id);
 
     const { firstName, lastName, phone, secondPhone, birthDate, status, isPaid } = updateStudentDto;
 
-    // If status is updated to INACTIVE, remove student from all groups
-    if (status === 'INACTIVE') {
+    if (status === 'INACTIVE' || status === 'ARCHIVED') {
       await this.prisma.groupStudent.deleteMany({
         where: { studentId: id },
       });
@@ -97,10 +100,33 @@ export class StudentsService {
     });
   }
 
-  async remove(id: number) {
+  // Soft delete / archive student
+  async remove(id: number, permanent?: boolean) {
     await this.findOne(id);
-    return this.prisma.student.delete({
+
+    if (permanent) {
+      return this.prisma.student.delete({
+        where: { id },
+      });
+    }
+
+    // Soft delete: remove active group enrollments and mark as ARCHIVED
+    await this.prisma.groupStudent.deleteMany({
+      where: { studentId: id },
+    });
+
+    return this.prisma.student.update({
       where: { id },
+      data: { status: 'ARCHIVED' },
+    });
+  }
+
+  // Restore archived student back to ACTIVE
+  async restore(id: number) {
+    await this.findOne(id);
+    return this.prisma.student.update({
+      where: { id },
+      data: { status: 'ACTIVE' },
     });
   }
 
@@ -108,10 +134,9 @@ export class StudentsService {
     const student = await this.findOne(studentId);
 
     if (student.status !== 'ACTIVE') {
-      throw new BadRequestException('Nofaol o\'quvchini guruhga biriktirib bo\'lmaydi');
+      throw new BadRequestException('Nofaol yoki arxivlangan o\'quvchini guruhga biriktirib bo\'lmaydi');
     }
 
-    // Create GroupStudent records
     const operations = groupIds.map((groupId) =>
       this.prisma.groupStudent.upsert({
         where: {

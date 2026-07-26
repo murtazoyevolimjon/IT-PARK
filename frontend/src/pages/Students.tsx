@@ -12,7 +12,9 @@ import {
   AlertCircle, 
   Phone,
   Calendar,
-  Check
+  Check,
+  RotateCcw,
+  Archive
 } from 'lucide-react';
 
 interface StudentsProps {
@@ -142,13 +144,36 @@ export const Students: React.FC<StudentsProps> = ({ onOpenMobileMenu }) => {
     }
   };
 
+  // Soft Delete / Archive Student
   const handleDeleteStudent = async (id: number) => {
-    if (!confirm('Haqiqatan ham ushbu o\'quvchini o\'chirib tashlamoqchimisiz?')) return;
+    if (!confirm('Haqiqatan ham ushbu o\'quvchini arxivga (o\'chirilganlar tarixiga) o\'tkazmoqchimisiz?')) return;
     try {
       await api.delete(`/students/${id}`);
       fetchStudents(statusFilter);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'O\'chirishda xatolik yuz berdi');
+      alert(err.response?.data?.message || 'Arxivga o\'tkazishda xatolik yuz berdi');
+    }
+  };
+
+  // Restore Student from Archive
+  const handleRestoreStudent = async (id: number) => {
+    if (!confirm('Ushbu o\'quvchini arxivdan qayta tiklamoqchimisiz?')) return;
+    try {
+      await api.patch(`/students/${id}/restore`);
+      fetchStudents(statusFilter);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Qayta tiklashda xatolik yuz berdi');
+    }
+  };
+
+  // Permanent Delete Student
+  const handlePermanentDeleteStudent = async (id: number) => {
+    if (!confirm('DIQQAT: Ushbu o\'quvchi bazadan BUTKUL o\'chiriladi! Qayta tiklab bo\'lmaydi. Rozimisiz?')) return;
+    try {
+      await api.delete(`/students/${id}?permanent=true`);
+      fetchStudents(statusFilter);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Butkul o\'chirishda xatolik yuz berdi');
     }
   };
 
@@ -220,12 +245,13 @@ export const Students: React.FC<StudentsProps> = ({ onOpenMobileMenu }) => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="py-2.5 px-4 rounded-xl text-sm glass-input cursor-pointer"
+              className="py-2.5 px-4 rounded-xl text-sm glass-input cursor-pointer font-medium"
             >
-              <option value="">Barcha statuslar</option>
-              <option value="ACTIVE">Faol</option>
-              <option value="INACTIVE">Nofaol</option>
+              <option value="">Barcha o'quvchilar (Faol/Nofaol)</option>
+              <option value="ACTIVE">Faol O'quvchilar</option>
+              <option value="INACTIVE">Nofaol O'quvchilar</option>
               <option value="unpaid">To'lov qilmaganlar</option>
+              <option value="ARCHIVED">📦 Arxiv (O'chirilganlar tarixi)</option>
             </select>
           </div>
 
@@ -237,6 +263,17 @@ export const Students: React.FC<StudentsProps> = ({ onOpenMobileMenu }) => {
             <span>Yangi o'quvchi</span>
           </button>
         </div>
+
+        {/* Banner if viewing archive */}
+        {statusFilter === 'ARCHIVED' && (
+          <div className="p-4 bg-amber-950/20 border border-amber-900/40 text-amber-300 rounded-2xl flex items-center gap-3 text-xs sm:text-sm">
+            <Archive size={20} className="shrink-0 text-amber-400" />
+            <div>
+              <p className="font-semibold">O'chirilgan O'quvchilar Arxivi (Tarix)</p>
+              <p className="text-amber-400/80 text-xs mt-0.5">Ushbu bo'limda ilgari o'chirilgan o'quvchilar saqlanadi. Istalgan vaqtda "Qayta Tiklash" tugmasi orqali o'quvchini faol holatga qaytarishingiz mumkin.</p>
+            </div>
+          </div>
+        )}
 
         {/* Error box */}
         {error && (
@@ -253,7 +290,7 @@ export const Students: React.FC<StudentsProps> = ({ onOpenMobileMenu }) => {
           </div>
         ) : filteredStudents.length === 0 ? (
           <div className="py-16 text-center text-gray-500 bg-gray-900/10 border border-dashed border-gray-800 rounded-2xl">
-            O'quvchilar topilmadi.
+            {statusFilter === 'ARCHIVED' ? 'Arxivda o\'chirilgan o\'quvchilar mavjud emas.' : 'O\'quvchilar topilmadi.'}
           </div>
         ) : (
           <div className="glass-card rounded-2xl border-gray-800/60 overflow-hidden">
@@ -276,7 +313,7 @@ export const Students: React.FC<StudentsProps> = ({ onOpenMobileMenu }) => {
                       <td className="py-4 px-6 font-semibold text-white">
                         <div className="flex flex-col">
                           <span>{student.firstName} {student.lastName}</span>
-                          {!student.isPaid && (
+                          {!student.isPaid && student.status !== 'ARCHIVED' && (
                             <span className="inline-flex w-max items-center mt-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-red-950/40 text-red-400 border border-red-900/40">
                               To'lov qilinmagan
                             </span>
@@ -312,7 +349,9 @@ export const Students: React.FC<StudentsProps> = ({ onOpenMobileMenu }) => {
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex flex-wrap gap-1">
-                          {student.status !== 'ACTIVE' ? (
+                          {student.status === 'ARCHIVED' ? (
+                            <span className="text-xs text-amber-500/80 italic">Arxivlangan</span>
+                          ) : student.status !== 'ACTIVE' ? (
                             <span className="text-xs text-gray-500 italic">-</span>
                           ) : student.groups.length === 0 ? (
                             <span className="text-xs text-gray-600 italic">Biriktirilmagan</span>
@@ -332,37 +371,65 @@ export const Students: React.FC<StudentsProps> = ({ onOpenMobileMenu }) => {
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                           student.status === 'ACTIVE' 
                             ? 'bg-emerald-950/30 border border-emerald-900/40 text-emerald-400' 
+                            : student.status === 'ARCHIVED'
+                            ? 'bg-amber-950/30 border border-amber-900/40 text-amber-400'
                             : 'bg-gray-850/30 border border-gray-800/40 text-gray-400'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${student.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-gray-400'}`}></span>
-                          <span>{student.status === 'ACTIVE' ? 'Faol' : 'Nofaol'}</span>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            student.status === 'ACTIVE' ? 'bg-emerald-400' : student.status === 'ARCHIVED' ? 'bg-amber-400' : 'bg-gray-400'
+                          }`}></span>
+                          <span>
+                            {student.status === 'ACTIVE' ? 'Faol' : student.status === 'ARCHIVED' ? 'Arxivlangan' : 'Nofaol'}
+                          </span>
                         </span>
                       </td>
                       <td className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-2.5">
-                          {student.status === 'ACTIVE' && (
-                            <button
-                              onClick={() => handleOpenEnroll(student)}
-                              title="Guruhga qo'shish"
-                              className="p-2 text-indigo-400 hover:text-indigo-300 bg-indigo-950/20 hover:bg-indigo-950/40 border border-indigo-900/30 rounded-lg transition-all cursor-pointer"
-                            >
-                              <FolderPlus size={14} />
-                            </button>
+                          {student.status === 'ARCHIVED' ? (
+                            <>
+                              <button
+                                onClick={() => handleRestoreStudent(student.id)}
+                                title="Qayta Tiklash"
+                                className="px-3 py-1.5 text-emerald-400 hover:text-emerald-300 bg-emerald-950/30 hover:bg-emerald-950/50 border border-emerald-900/40 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+                              >
+                                <RotateCcw size={13} />
+                                <span>Tiklash</span>
+                              </button>
+                              <button
+                                onClick={() => handlePermanentDeleteStudent(student.id)}
+                                title="Butkul O'chirish"
+                                className="p-2 text-red-400 hover:text-red-300 bg-red-950/20 hover:bg-red-950/40 border border-red-900/30 rounded-lg transition-all cursor-pointer"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              {student.status === 'ACTIVE' && (
+                                <button
+                                  onClick={() => handleOpenEnroll(student)}
+                                  title="Guruhga qo'shish"
+                                  className="p-2 text-indigo-400 hover:text-indigo-300 bg-indigo-950/20 hover:bg-indigo-950/40 border border-indigo-900/30 rounded-lg transition-all cursor-pointer"
+                                >
+                                  <FolderPlus size={14} />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleOpenEdit(student)}
+                                title="Tahrirlash"
+                                className="p-2 text-amber-400 hover:text-amber-300 bg-amber-950/20 hover:bg-amber-950/40 border border-amber-900/30 rounded-lg transition-all cursor-pointer"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteStudent(student.id)}
+                                title="Arxivga O'chirish"
+                                className="p-2 text-red-400 hover:text-red-300 bg-red-950/20 hover:bg-red-950/40 border border-red-900/30 rounded-lg transition-all cursor-pointer"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </>
                           )}
-                          <button
-                            onClick={() => handleOpenEdit(student)}
-                            title="Tahrirlash"
-                            className="p-2 text-amber-400 hover:text-amber-300 bg-amber-950/20 hover:bg-amber-950/40 border border-amber-900/30 rounded-lg transition-all cursor-pointer"
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteStudent(student.id)}
-                            title="O'chirish"
-                            className="p-2 text-red-400 hover:text-red-300 bg-red-950/20 hover:bg-red-950/40 border border-red-900/30 rounded-lg transition-all cursor-pointer"
-                          >
-                            <Trash2 size={14} />
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -481,7 +548,7 @@ export const Students: React.FC<StudentsProps> = ({ onOpenMobileMenu }) => {
                   >
                     Bekor qilish
                   </button>
-                   <button
+                  <button
                     type="submit"
                     disabled={submitting}
                     className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-850 disabled:text-gray-400 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
