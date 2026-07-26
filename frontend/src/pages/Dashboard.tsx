@@ -38,7 +38,11 @@ ChartJS.register(
   Filler
 );
 
-export const Dashboard: React.FC = () => {
+interface DashboardProps {
+  onOpenMobileMenu?: () => void;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ onOpenMobileMenu }) => {
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +55,6 @@ export const Dashboard: React.FC = () => {
         setData(response.data);
       } catch (err: any) {
         setError('Dashboard ma\'lumotlarini yuklashda xatolik yuz berdi.');
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -62,18 +65,24 @@ export const Dashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="flex-1 flex flex-col min-h-screen bg-[#070b13]">
+        <Header title="Dashboard" onOpenMobileMenu={onOpenMobileMenu} />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
+        </div>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="p-8">
-        <div className="p-4 bg-red-950/20 border border-red-900/40 text-red-400 rounded-xl flex items-center gap-3">
-          <AlertCircle size={20} />
-          <span>{error || 'Hech qanday ma\'lumot topilmadi.'}</span>
+      <div className="flex-1 flex flex-col min-h-screen bg-[#070b13]">
+        <Header title="Dashboard" onOpenMobileMenu={onOpenMobileMenu} />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="bg-red-950/30 border border-red-900/40 text-red-400 p-4 rounded-xl flex items-center gap-3">
+            <AlertCircle size={20} />
+            <span>{error || 'Ma\'lumotlar topilmadi'}</span>
+          </div>
         </div>
       </div>
     );
@@ -83,10 +92,10 @@ export const Dashboard: React.FC = () => {
 
   // Stats Card Configs
   const statCards = [
-    { label: 'Jami O\'quvchilar', value: stats.students, sub: `${stats.activeStudents} tasi faol`, icon: Users, color: 'from-blue-600/20 to-indigo-600/15', text: 'text-indigo-400', glow: 'glow-primary' },
-    { label: 'O\'qituvchilar', value: stats.teachers, sub: 'Faol ustozlar', icon: UserSquare2, color: 'from-purple-600/20 to-fuchsia-600/15', text: 'text-fuchsia-400', glow: 'glow-primary' },
-    { label: 'Guruhlar soni', value: stats.groups, sub: 'Kurslar bo\'yicha', icon: BookOpen, color: 'from-amber-600/20 to-orange-600/15', text: 'text-orange-400', glow: 'glow-primary' },
-    { label: 'O\'quv Xonalari', value: stats.rooms, sub: 'Band va bo\'sh', icon: Home, color: 'from-emerald-600/20 to-teal-600/15', text: 'text-emerald-400', glow: 'glow-success' },
+    { label: 'Jami O\'quvchilar', value: stats.totalStudents, sub: 'Faol o\'quvchilar', icon: Users, color: 'from-blue-600/20 to-indigo-600/20 text-blue-400', glow: 'glow-primary' },
+    { label: 'Jami O\'qituvchilar', value: stats.totalTeachers, sub: 'Faol o\'qituvchilar', icon: UserSquare2, color: 'from-purple-600/20 to-pink-600/20 text-purple-400', glow: 'glow-primary' },
+    { label: 'Jami Xonalar', value: stats.totalRooms, sub: 'Mavjud dars xonalari', icon: Home, color: 'from-emerald-600/20 to-teal-600/20 text-emerald-400', glow: 'glow-success' },
+    { label: 'Faol Guruhlar', value: stats.activeGroups, sub: 'O\'tilayotgan kurslar', icon: BookOpen, color: 'from-amber-600/20 to-orange-600/20 text-amber-400', glow: 'glow-primary' },
   ];
 
   // Chart Data: Attendance Trend
@@ -144,9 +153,9 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-[#070b13]">
-      <Header title="Dashboard" />
+      <Header title="Dashboard" onOpenMobileMenu={onOpenMobileMenu} />
 
-      <main className="flex-1 p-8 space-y-8 max-w-7xl mx-auto w-full">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto w-full">
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {statCards.map((card, idx) => {
@@ -158,7 +167,7 @@ export const Dashboard: React.FC = () => {
                   <h3 className="text-3xl font-extrabold text-white mb-1">{card.value}</h3>
                   <span className="text-xs text-gray-400 font-medium">{card.sub}</span>
                 </div>
-                <div className={`p-3.5 rounded-xl bg-gradient-to-br ${card.color} ${card.text}`}>
+                <div className={`p-3.5 rounded-xl bg-gradient-to-br ${card.color}`}>
                   <Icon size={24} />
                 </div>
               </div>

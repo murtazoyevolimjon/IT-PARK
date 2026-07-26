@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import api from '../utils/api';
 import { Header } from '../components/Header';
 import { 
@@ -15,15 +15,21 @@ import {
   Check
 } from 'lucide-react';
 
-export const Students: React.FC = () => {
-  const location = useLocation();
+interface StudentsProps {
+  onOpenMobileMenu?: () => void;
+}
+
+export const Students: React.FC<StudentsProps> = ({ onOpenMobileMenu }) => {
+  const [searchParams] = useSearchParams();
+  const initialStatus = searchParams.get('status') || '';
+
   const [students, setStudents] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>(initialStatus);
+  const [error, setError] = useState('');
 
   // Modals state
   const [isCrudModalOpen, setIsCrudModalOpen] = useState(false);
@@ -50,13 +56,14 @@ export const Students: React.FC = () => {
       const response = await api.get(url);
       setStudents(response.data);
     } catch (err: any) {
+      console.error(err);
       setError('O\'quvchilar ro\'yxatini yuklashda xatolik yuz berdi.');
     }
   };
 
   const fetchGroups = async () => {
     try {
-      const response = await api.get('/groups');
+      const response = await api.get('/courses/groups');
       setGroups(response.data);
     } catch (err: any) {
       console.error(err);
@@ -64,18 +71,16 @@ export const Students: React.FC = () => {
   };
 
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const statusParam = queryParams.get('status') || '';
-    setStatusFilter(statusParam);
-  }, [location.search]);
-
-  useEffect(() => {
-    const init = async () => {
+    const loadData = async () => {
       setLoading(true);
       await Promise.all([fetchStudents(statusFilter), fetchGroups()]);
       setLoading(false);
     };
-    init();
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    fetchStudents(statusFilter);
   }, [statusFilter]);
 
   const handleOpenCreate = () => {
@@ -83,7 +88,7 @@ export const Students: React.FC = () => {
     setFormData({
       firstName: '',
       lastName: '',
-      phone: '+998',
+      phone: '',
       secondPhone: '',
       birthDate: '',
       status: 'ACTIVE',
@@ -108,9 +113,8 @@ export const Students: React.FC = () => {
 
   const handleOpenEnroll = (student: any) => {
     setEnrollingStudent(student);
-    // Preset already enrolled groups
-    const currentGroupIds = student.groups.map((g: any) => g.group.id);
-    setSelectedGroupIds(currentGroupIds);
+    const studentGroupIds = student.groups.map((g: any) => g.group.id);
+    setSelectedGroupIds(studentGroupIds);
     setIsEnrollModalOpen(true);
   };
 
@@ -151,10 +155,8 @@ export const Students: React.FC = () => {
   const handleSaveEnrollment = async () => {
     if (!enrollingStudent) return;
     try {
-      // First link selected ones
       await api.post(`/students/${enrollingStudent.id}/groups`, { groupIds: selectedGroupIds });
       
-      // Then check for any removed ones and delete link.
       const prevGroupIds = enrollingStudent.groups.map((g: any) => g.group.id);
       const removedGroupIds = prevGroupIds.filter((id: number) => !selectedGroupIds.includes(id));
       
@@ -163,7 +165,7 @@ export const Students: React.FC = () => {
       }
 
       setIsEnrollModalOpen(false);
-      fetchStudents();
+      fetchStudents(statusFilter);
     } catch (err: any) {
       alert('Guruhga biriktirishda xatolik yuz berdi');
     }
@@ -175,7 +177,6 @@ export const Students: React.FC = () => {
     );
   };
 
-  // Filter students based on search and status
   const filteredStudents = students.filter((student) => {
     const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
     const phone = student.phone.toLowerCase();
@@ -195,9 +196,9 @@ export const Students: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-[#070b13]">
-      <Header title="O'quvchilar Boshqaruvi" />
+      <Header title="O'quvchilar Boshqaruvi" onOpenMobileMenu={onOpenMobileMenu} />
 
-      <main className="flex-1 p-8 space-y-6 max-w-7xl mx-auto w-full">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
         {/* Controls and filters */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex flex-1 w-full md:w-auto items-center gap-4">

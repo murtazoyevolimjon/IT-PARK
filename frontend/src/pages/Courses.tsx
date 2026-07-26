@@ -14,7 +14,11 @@ import {
   UserSquare2
 } from 'lucide-react';
 
-export const Courses: React.FC = () => {
+interface CoursesProps {
+  onOpenMobileMenu?: () => void;
+}
+
+export const Courses: React.FC<CoursesProps> = ({ onOpenMobileMenu }) => {
   const [courses, setCourses] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -45,8 +49,8 @@ export const Courses: React.FC = () => {
     try {
       const [cRes, gRes, tRes] = await Promise.all([
         api.get('/courses'),
-        api.get('/groups'),
-        api.get('/teachers')
+        api.get('/courses/groups'),
+        api.get('/teachers'),
       ]);
       setCourses(cRes.data);
       setGroups(gRes.data);
@@ -65,7 +69,7 @@ export const Courses: React.FC = () => {
     init();
   }, []);
 
-  // Course CRUD handlers
+  // Course actions
   const handleOpenCourseCreate = () => {
     setEditingCourse(null);
     setCourseFormData({ name: '', description: '' });
@@ -91,7 +95,7 @@ export const Courses: React.FC = () => {
       setIsCourseModalOpen(false);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Kursni saqlashda xatolik');
+      alert(err.response?.data?.message || 'Saqlashda xatolik yuz berdi');
     } finally {
       setSubmitting(false);
     }
@@ -103,17 +107,17 @@ export const Courses: React.FC = () => {
       await api.delete(`/courses/${id}`);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Kursni o\'chirishda xatolik');
+      alert(err.response?.data?.message || 'O\'chirishda xatolik yuz berdi');
     }
   };
 
-  // Group CRUD handlers
+  // Group actions
   const handleOpenGroupCreate = () => {
     setEditingGroup(null);
     setGroupFormData({
       name: '',
-      courseId: courses[0]?.id?.toString() || '',
-      teacherId: teachers[0]?.id?.toString() || '',
+      courseId: courses[0]?.id ? String(courses[0].id) : '',
+      teacherId: teachers[0]?.id ? String(teachers[0].id) : '',
       startDate: '',
       endDate: '',
     });
@@ -124,10 +128,10 @@ export const Courses: React.FC = () => {
     setEditingGroup(group);
     setGroupFormData({
       name: group.name,
-      courseId: group.courseId.toString(),
-      teacherId: group.teacherId.toString(),
-      startDate: group.startDate.split('T')[0],
-      endDate: group.endDate.split('T')[0],
+      courseId: String(group.courseId),
+      teacherId: String(group.teacherId),
+      startDate: group.startDate ? group.startDate.split('T')[0] : '',
+      endDate: group.endDate ? group.endDate.split('T')[0] : '',
     });
     setIsGroupModalOpen(true);
   };
@@ -135,22 +139,25 @@ export const Courses: React.FC = () => {
   const handleSaveGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting) return;
-    const payload = {
-      ...groupFormData,
-      courseId: parseInt(groupFormData.courseId, 10),
-      teacherId: parseInt(groupFormData.teacherId, 10),
-    };
     try {
       setSubmitting(true);
+      const payload = {
+        name: groupFormData.name,
+        courseId: Number(groupFormData.courseId),
+        teacherId: Number(groupFormData.teacherId),
+        startDate: groupFormData.startDate,
+        endDate: groupFormData.endDate,
+      };
+
       if (editingGroup) {
-        await api.put(`/groups/${editingGroup.id}`, payload);
+        await api.put(`/courses/groups/${editingGroup.id}`, payload);
       } else {
-        await api.post('/groups', payload);
+        await api.post('/courses/groups', payload);
       }
       setIsGroupModalOpen(false);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Guruhni saqlashda xatolik');
+      alert(err.response?.data?.message || 'Saqlashda xatolik yuz berdi');
     } finally {
       setSubmitting(false);
     }
@@ -159,10 +166,10 @@ export const Courses: React.FC = () => {
   const handleDeleteGroup = async (id: number) => {
     if (!confirm('Haqiqatan ham ushbu guruhni o\'chirib tashlamoqchimisiz?')) return;
     try {
-      await api.delete(`/groups/${id}`);
+      await api.delete(`/courses/groups/${id}`);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Guruhni o\'chirishda xatolik');
+      alert(err.response?.data?.message || 'O\'chirishda xatolik yuz berdi');
     }
   };
 
@@ -172,9 +179,9 @@ export const Courses: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-[#070b13]">
-      <Header title="Kurslar va Guruhlar Boshqaruvi" />
+      <Header title="Kurslar va Guruhlar Boshqaruvi" onOpenMobileMenu={onOpenMobileMenu} />
 
-      <main className="flex-1 p-8 space-y-6 max-w-7xl mx-auto w-full">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
         {/* Navigation Tabs and Controls */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-gray-800/60 pb-4">
           <div className="flex bg-gray-900/35 border border-gray-800/60 p-1 rounded-xl">

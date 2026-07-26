@@ -12,7 +12,11 @@ import {
   Loader
 } from 'lucide-react';
 
-export const Attendance: React.FC = () => {
+interface AttendanceProps {
+  onOpenMobileMenu?: () => void;
+}
+
+export const Attendance: React.FC<AttendanceProps> = ({ onOpenMobileMenu }) => {
   const [groups, setGroups] = useState<any[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -28,10 +32,10 @@ export const Attendance: React.FC = () => {
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const response = await api.get('/groups');
+        const response = await api.get('/courses/groups');
         setGroups(response.data);
         if (response.data.length > 0) {
-          setSelectedGroupId(response.data[0].id.toString());
+          setSelectedGroupId(String(response.data[0].id));
         }
       } catch (err: any) {
         setError('Guruhlar ro\'yxatini yuklashda xatolik yuz berdi.');
@@ -42,39 +46,28 @@ export const Attendance: React.FC = () => {
 
   // Fetch attendance records when group or date changes
   const fetchAttendanceSheet = async () => {
-    if (!selectedGroupId || !date) return;
+    if (!selectedGroupId) return;
     try {
       setLoading(true);
       setError('');
-      setSuccess(false);
       const response = await api.get(`/attendance/${selectedGroupId}?date=${date}`);
-      
-      // Map to local state
-      // If status is null, default it to 'kelgan' or keep it null to prompt user
-      const initialRecords = response.data.map((r: any) => ({
-        studentId: r.studentId,
-        firstName: r.firstName,
-        lastName: r.lastName,
-        phone: r.phone,
-        isPaid: r.isPaid,
-        status: r.status || 'kelgan', // default to present if not marked
-        comment: r.comment || '',
-      }));
-      setRecords(initialRecords);
+      setRecords(response.data.students || []);
     } catch (err: any) {
-      setError('Davomat varaqasini yuklashda xatolik yuz berdi.');
+      setError(err.response?.data?.message || 'Davomat ma\'lumotlarini yuklashda xatolik yuz berdi');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAttendanceSheet();
+    if (selectedGroupId && date) {
+      fetchAttendanceSheet();
+    }
   }, [selectedGroupId, date]);
 
-  const handleStatusChange = (studentId: number, status: string) => {
+  const handleStatusChange = (studentId: number, newStatus: string) => {
     setRecords((prev) =>
-      prev.map((r) => (r.studentId === studentId ? { ...r, status } : r))
+      prev.map((r) => (r.studentId === studentId ? { ...r, status: newStatus } : r))
     );
   };
 
@@ -85,25 +78,25 @@ export const Attendance: React.FC = () => {
   };
 
   const handleSaveAttendance = async () => {
-    setSaving(true);
-    setError('');
-    setSuccess(false);
-
-    const payload = {
-      groupId: parseInt(selectedGroupId, 10),
-      date,
-      records: records.map((r) => ({
-        studentId: r.studentId,
-        status: r.status,
-        comment: r.comment,
-      })),
-    };
-
+    if (!selectedGroupId) return;
     try {
+      setSaving(true);
+      setError('');
+
+      const payload = {
+        groupId: Number(selectedGroupId),
+        date,
+        records: records.map((r) => ({
+          studentId: r.studentId,
+          status: r.status,
+          comment: r.comment || '',
+        })),
+      };
+
       await api.post('/attendance/bulk', payload);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-      fetchAttendanceSheet(); // reload
+      fetchAttendanceSheet();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Davomatni saqlashda xatolik yuz berdi');
     } finally {
@@ -113,9 +106,9 @@ export const Attendance: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-[#070b13]">
-      <Header title="Davomat Belgilash" />
+      <Header title="Davomat Belgilash" onOpenMobileMenu={onOpenMobileMenu} />
 
-      <main className="flex-1 p-8 space-y-6 max-w-7xl mx-auto w-full">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
         {/* Selection Bar */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end glass-card p-5 rounded-2xl border-gray-800/60">
           <div>

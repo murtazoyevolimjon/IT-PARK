@@ -13,6 +13,7 @@ import { Sidebar } from './components/Sidebar';
 function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [user, setUser] = useState<any>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -39,6 +40,14 @@ function App() {
     setUser(null);
   };
 
+  const handleOpenMobileMenu = () => {
+    setIsMobileMenuOpen(true);
+  };
+
+  const handleCloseMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   if (!token) {
     return (
       <Router>
@@ -53,19 +62,24 @@ function App() {
   return (
     <Router>
       <div className="flex min-h-screen bg-[#070b13]">
-        {/* Sidebar */}
-        <Sidebar user={user} onLogout={handleLogout} />
+        {/* Sidebar with Desktop & Mobile Drawer Support */}
+        <Sidebar 
+          user={user} 
+          onLogout={handleLogout} 
+          isOpenMobile={isMobileMenuOpen}
+          onCloseMobile={handleCloseMobileMenu}
+        />
 
         {/* Content Area */}
-        <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
+        <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden w-full">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/students" element={<Students />} />
-            <Route path="/teachers" element={<Teachers />} />
-            <Route path="/rooms" element={<Rooms />} />
-            <Route path="/courses" element={<Courses />} />
-            <Route path="/schedule" element={<Schedule />} />
-            <Route path="/attendance" element={<Attendance />} />
+            <Route path="/" element={<Dashboard onOpenMobileMenu={handleOpenMobileMenu} />} />
+            <Route path="/students" element={<Students onOpenMobileMenu={handleOpenMobileMenu} />} />
+            <Route path="/teachers" element={<Teachers onOpenMobileMenu={handleOpenMobileMenu} />} />
+            <Route path="/rooms" element={<Rooms onOpenMobileMenu={handleOpenMobileMenu} />} />
+            <Route path="/courses" element={<Courses onOpenMobileMenu={handleOpenMobileMenu} />} />
+            <Route path="/schedule" element={<Schedule onOpenMobileMenu={handleOpenMobileMenu} />} />
+            <Route path="/attendance" element={<Attendance onOpenMobileMenu={handleOpenMobileMenu} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

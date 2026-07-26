@@ -12,7 +12,11 @@ import {
   Users
 } from 'lucide-react';
 
-export const Rooms: React.FC = () => {
+interface RoomsProps {
+  onOpenMobileMenu?: () => void;
+}
+
+export const Rooms: React.FC<RoomsProps> = ({ onOpenMobileMenu }) => {
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,9 +107,9 @@ export const Rooms: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-[#070b13]">
-      <Header title="Xonalar Boshqaruvi" />
+      <Header title="Xonalar Boshqaruvi" onOpenMobileMenu={onOpenMobileMenu} />
 
-      <main className="flex-1 p-8 space-y-6 max-w-7xl mx-auto w-full">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
         {/* Controls and filters */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Search */}

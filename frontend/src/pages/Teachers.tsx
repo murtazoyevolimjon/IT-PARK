@@ -12,7 +12,11 @@ import {
   BookOpen
 } from 'lucide-react';
 
-export const Teachers: React.FC = () => {
+interface TeachersProps {
+  onOpenMobileMenu?: () => void;
+}
+
+export const Teachers: React.FC<TeachersProps> = ({ onOpenMobileMenu }) => {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,7 +59,7 @@ export const Teachers: React.FC = () => {
     setFormData({
       firstName: '',
       lastName: '',
-      phone: '+998',
+      phone: '',
       secondPhone: '',
       subject: '',
     });
@@ -103,21 +107,19 @@ export const Teachers: React.FC = () => {
     }
   };
 
-  // Filter teachers based on search
   const filteredTeachers = teachers.filter((teacher) => {
     const fullName = `${teacher.firstName} ${teacher.lastName}`.toLowerCase();
-    const phone = teacher.phone.toLowerCase();
     const subject = teacher.subject.toLowerCase();
+    const phone = teacher.phone.toLowerCase();
     const query = searchQuery.toLowerCase();
-    
-    return fullName.includes(query) || phone.includes(query) || subject.includes(query);
+    return fullName.includes(query) || subject.includes(query) || phone.includes(query);
   });
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-[#070b13]">
-      <Header title="O'qituvchilar Boshqaruvi" />
+      <Header title="O'qituvchilar Boshqaruvi" onOpenMobileMenu={onOpenMobileMenu} />
 
-      <main className="flex-1 p-8 space-y-6 max-w-7xl mx-auto w-full">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
         {/* Controls and filters */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Search */}

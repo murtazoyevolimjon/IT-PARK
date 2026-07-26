@@ -22,7 +22,11 @@ const DAY_LABELS: Record<string, string> = {
   SUNDAY: 'Yakshanba',
 };
 
-export const Schedule: React.FC = () => {
+interface ScheduleProps {
+  onOpenMobileMenu?: () => void;
+}
+
+export const Schedule: React.FC<ScheduleProps> = ({ onOpenMobileMenu }) => {
   const [rooms, setRooms] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [schedules, setSchedules] = useState<any[]>([]);
@@ -42,87 +46,90 @@ export const Schedule: React.FC = () => {
     groupId: '',
     roomId: '',
     dayOfWeek: 'MONDAY',
-    startTime: '',
-    endTime: '',
+    startTime: '14:00',
+    endTime: '15:30',
   });
 
   const fetchData = async () => {
     try {
       const [rRes, gRes] = await Promise.all([
         api.get('/rooms'),
-        api.get('/groups')
+        api.get('/courses/groups')
       ]);
       setRooms(rRes.data);
       setGroups(gRes.data);
       if (rRes.data.length > 0 && !selectedRoomId) {
-        setSelectedRoomId(rRes.data[0].id.toString());
+        setSelectedRoomId(String(rRes.data[0].id));
       }
     } catch (err: any) {
-      setError('Xonalar va guruhlarni yuklashda xatolik yuz berdi.');
+      setError('Ma\'lumotlarni yuklashda xatolik yuz berdi.');
     }
   };
 
-  const fetchSchedules = async () => {
-    if (!selectedRoomId) return;
+  const fetchSchedules = async (roomId: string) => {
+    if (!roomId) return;
     try {
-      setLoading(true);
-      const response = await api.get(`/schedules?roomId=${selectedRoomId}`);
+      const response = await api.get(`/schedule?roomId=${roomId}`);
       setSchedules(response.data);
-      setError('');
     } catch (err: any) {
-      setError('Dars jadvalini yuklashda xatolik yuz berdi.');
-    } finally {
-      setLoading(false);
+      console.error(err);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    const init = async () => {
+      setLoading(true);
+      await fetchData();
+      setLoading(false);
+    };
+    init();
   }, []);
 
   useEffect(() => {
-    fetchSchedules();
+    if (selectedRoomId) {
+      fetchSchedules(selectedRoomId);
+    }
   }, [selectedRoomId]);
 
   const handleOpenCreate = () => {
     setEditingSchedule(null);
     setConflictError('');
     setFormData({
-      groupId: groups[0]?.id?.toString() || '',
-      roomId: selectedRoomId,
+      groupId: groups[0]?.id ? String(groups[0].id) : '',
+      roomId: selectedRoomId || (rooms[0]?.id ? String(rooms[0].id) : ''),
       dayOfWeek: 'MONDAY',
-      startTime: '09:00',
-      endTime: '10:30',
+      startTime: '14:00',
+      endTime: '15:30',
     });
     setIsModalOpen(true);
   };
 
   const handleSaveSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (submitting) return;
     setConflictError('');
-    const payload = {
-      groupId: parseInt(formData.groupId, 10),
-      roomId: parseInt(formData.roomId, 10),
-      dayOfWeek: formData.dayOfWeek,
-      startTime: formData.startTime,
-      endTime: formData.endTime,
-    };
-
+    if (submitting) return;
     try {
       setSubmitting(true);
+      const payload = {
+        groupId: Number(formData.groupId),
+        roomId: Number(formData.roomId),
+        dayOfWeek: formData.dayOfWeek,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+      };
+
       if (editingSchedule) {
-        await api.put(`/schedules/${editingSchedule.id}`, payload);
+        await api.put(`/schedule/${editingSchedule.id}`, payload);
       } else {
-        await api.post('/schedules', payload);
+        await api.post('/schedule', payload);
       }
       setIsModalOpen(false);
-      fetchSchedules();
+      fetchSchedules(selectedRoomId);
     } catch (err: any) {
       if (err.response?.status === 409) {
-        setConflictError(err.response.data.message);
+        setConflictError(err.response.data.message || 'Xonada dars vaqti to\'qnashuvi mavjud!');
       } else {
-        alert(err.response?.data?.message || 'Jadvalni saqlashda xatolik yuz berdi');
+        alert(err.response?.data?.message || 'Saqlashda xatolik yuz berdi');
       }
     } finally {
       setSubmitting(false);
@@ -130,12 +137,12 @@ export const Schedule: React.FC = () => {
   };
 
   const handleDeleteSchedule = async (id: number) => {
-    if (!confirm('Ushbu dars darslik jadvalidan o\'chirilsinmi?')) return;
+    if (!confirm('Haqiqatan ham ushbu jadval darsini o\'chirib tashlamoqchimisiz?')) return;
     try {
-      await api.delete(`/schedules/${id}`);
-      fetchSchedules();
+      await api.delete(`/schedule/${id}`);
+      fetchSchedules(selectedRoomId);
     } catch (err: any) {
-      alert('O\'chirishda xatolik yuz berdi');
+      alert(err.response?.data?.message || 'O\'chirishda xatolik yuz berdi');
     }
   };
 
@@ -147,7 +154,7 @@ export const Schedule: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-[#070b13]">
-      <Header title="Haftalik Dars Jadvali" />
+      <Header title="Haftalik Dars Jadvali" onOpenMobileMenu={onOpenMobileMenu} />
 
       <main className="flex-1 p-8 space-y-6 max-w-7xl mx-auto w-full">
         {/* Controls bar */}

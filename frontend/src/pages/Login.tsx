@@ -37,7 +37,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="h-screen max-h-screen w-screen flex items-center justify-center bg-[#030712] relative overflow-hidden p-3 sm:p-5 lg:p-6 select-none">
+    <div className="min-h-screen lg:h-screen lg:max-h-screen w-screen flex items-center justify-center bg-[#030712] relative overflow-y-auto lg:overflow-hidden p-3 sm:p-5 lg:p-6 select-none">
       {/* Background Dotted Grid Pattern */}
       <div className="absolute inset-0 z-0 bg-[radial-gradient(rgba(99,102,241,0.07)_1.5px,transparent_1.5px)] [background-size:24px_24px]"></div>
 
