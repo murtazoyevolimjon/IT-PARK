@@ -47,7 +47,7 @@ export const Attendance: React.FC = () => {
       setLoading(true);
       setError('');
       setSuccess(false);
-      const response = await api.get(`/attendance/group/${selectedGroupId}?date=${date}`);
+      const response = await api.get(`/attendance/${selectedGroupId}?date=${date}`);
       
       // Map to local state
       // If status is null, default it to 'kelgan' or keep it null to prompt user
@@ -56,6 +56,7 @@ export const Attendance: React.FC = () => {
         firstName: r.firstName,
         lastName: r.lastName,
         phone: r.phone,
+        isPaid: r.isPaid,
         status: r.status || 'kelgan', // default to present if not marked
         comment: r.comment || '',
       }));
@@ -208,7 +209,14 @@ export const Attendance: React.FC = () => {
                   {records.map((record) => (
                     <tr key={record.studentId} className="hover:bg-gray-800/20 transition-all">
                       <td className="py-4 px-6 font-semibold text-white">
-                        {record.firstName} {record.lastName}
+                        <div className="flex items-center gap-2">
+                          <span>{record.firstName} {record.lastName}</span>
+                          {!record.isPaid && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-950/40 text-red-400 border border-red-900/40">
+                              To'lov qilinmagan
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-4 px-6 text-gray-400">{record.phone}</td>
                       <td className="py-4 px-6">

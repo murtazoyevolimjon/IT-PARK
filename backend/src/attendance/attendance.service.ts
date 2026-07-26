@@ -1,10 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BulkAttendanceDto } from './dto/attendance.dto';
+import { Attendance } from '@prisma/client';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class AttendanceService {
   constructor(private prisma: PrismaService) {}
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async cleanupOldAttendanceRecords() {
+    const thresholdDate = new Date();
+    thresholdDate.setDate(thresholdDate.getDate() - 30);
+    thresholdDate.setUTCHours(0, 0, 0, 0);
+
+    const deleted = await this.prisma.attendance.deleteMany({
+      where: {
+        date: {
+          lt: thresholdDate,
+        },
+      },
+    });
+
+    console.log(`[Cron Job] Data retention cleanup completed: deleted ${deleted.count} records older than 30 days.`);
+  }
 
   // Date parser to get date at midnight UTC
   private getMidnightDate(dateStr: string): Date {
@@ -19,7 +38,7 @@ export class AttendanceService {
       where: { id: groupId },
     });
     if (!group) {
-      throw new NotFoundException('Guruh topilmadi');
+      return [];
     }
 
     const targetDate = this.getMidnightDate(dateStr);
@@ -41,7 +60,9 @@ export class AttendanceService {
     });
 
     // 4. Merge
-    const attendanceMap = new Map(attendances.map((a) => [a.studentId, a]));
+    const attendanceMap = new Map<number, Attendance>(
+      attendances.map((a) => [a.studentId, a])
+    );
 
     return enrollments.map((env) => {
       const student = env.student;
@@ -52,6 +73,7 @@ export class AttendanceService {
         firstName: student.firstName,
         lastName: student.lastName,
         phone: student.phone,
+        isPaid: student.isPaid,
         attendanceId: att?.id || null,
         status: att?.status || null, // null means not marked yet
         comment: att?.comment || null,

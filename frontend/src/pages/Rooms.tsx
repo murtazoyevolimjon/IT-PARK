@@ -17,6 +17,7 @@ export const Rooms: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,7 +67,9 @@ export const Rooms: React.FC = () => {
 
   const handleSaveRoom = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     try {
+      setSubmitting(true);
       if (editingRoom) {
         await api.put(`/rooms/${editingRoom.id}`, formData);
       } else {
@@ -76,6 +79,8 @@ export const Rooms: React.FC = () => {
       fetchRooms();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Saqlashda xatolik yuz berdi');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -235,11 +240,12 @@ export const Rooms: React.FC = () => {
                   >
                     Bekor qilish
                   </button>
-                  <button
+                   <button
                     type="submit"
-                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
+                    disabled={submitting}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-850 disabled:text-gray-400 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
                   >
-                    Saqlash
+                    {submitting ? "Saqlanmoqda..." : "Saqlash"}
                   </button>
                 </div>
               </form>

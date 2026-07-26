@@ -12,7 +12,13 @@ export class AuthService {
   ) {}
 
   async login(loginDto: LoginDto) {
-    const { phone, password } = loginDto;
+    let { phone, password } = loginDto;
+
+    // Normalize phone number: remove spaces, dashes, brackets, prepend + if 998 format
+    phone = phone.replace(/[\s\-\(\)]/g, '');
+    if (/^998\d{9}$/.test(phone)) {
+      phone = '+' + phone;
+    }
 
     // Find user
     const user = await this.prisma.user.findUnique({

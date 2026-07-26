@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsOptional, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsDateString, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateStudentDto {
@@ -17,6 +17,11 @@ export class CreateStudentDto {
   @IsString({ message: 'Telefon raqami matn bo\'lishi shart' })
   phone: string;
 
+  @ApiProperty({ description: 'Qo\'shimcha telefon raqami (ixtiyoriy)', example: '+998909998877', required: false })
+  @IsOptional()
+  @IsString()
+  secondPhone?: string;
+
   @ApiProperty({ description: 'Tug\'ilgan sana (ixtiyoriy)', example: '2005-08-15', required: false })
   @IsOptional()
   @IsDateString({}, { message: 'Tug\'ilgan sana yaroqli sana formati bo\'lishi shart' })
@@ -26,4 +31,9 @@ export class CreateStudentDto {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @ApiProperty({ description: 'To\'lov holati (oylik to\'lov qilinganmi)', example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  isPaid?: boolean;
 }

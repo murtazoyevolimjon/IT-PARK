@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/create-teacher.dto';
@@ -51,8 +51,17 @@ export class TeachersService {
 
   async remove(id: number) {
     await this.findOne(id);
-    return this.prisma.teacher.delete({
-      where: { id },
-    });
+    try {
+      return await this.prisma.teacher.delete({
+        where: { id },
+      });
+    } catch (error: any) {
+      if (error.code === 'P2003') {
+        throw new BadRequestException(
+          'Ushbu o\'qituvchiga biriktirilgan guruhlar mavjud. O\'chirishdan oldin ularni boshqa o\'qituvchiga biriktiring yoki guruhlarni o\'chiring.'
+        );
+      }
+      throw error;
+    }
   }
 }

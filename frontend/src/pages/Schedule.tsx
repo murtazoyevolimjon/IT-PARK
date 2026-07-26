@@ -31,6 +31,7 @@ export const Schedule: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [conflictError, setConflictError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -98,6 +99,7 @@ export const Schedule: React.FC = () => {
 
   const handleSaveSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     setConflictError('');
     const payload = {
       groupId: parseInt(formData.groupId, 10),
@@ -108,6 +110,7 @@ export const Schedule: React.FC = () => {
     };
 
     try {
+      setSubmitting(true);
       if (editingSchedule) {
         await api.put(`/schedules/${editingSchedule.id}`, payload);
       } else {
@@ -121,6 +124,8 @@ export const Schedule: React.FC = () => {
       } else {
         alert(err.response?.data?.message || 'Jadvalni saqlashda xatolik yuz berdi');
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -348,11 +353,12 @@ export const Schedule: React.FC = () => {
                   >
                     Bekor qilish
                   </button>
-                  <button
+                   <button
                     type="submit"
-                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
+                    disabled={submitting}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-850 disabled:text-gray-400 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
                   >
-                    Qo'shish
+                    {submitting ? "Saqlanmoqda..." : "Saqlash"}
                   </button>
                 </div>
               </form>

@@ -11,7 +11,7 @@ import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger'
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
-  @Get('group/:groupId')
+  @Get(':groupId')
   @ApiOperation({ summary: 'Guruh o\'quvchilari va ularning ma\'lum sanadagi davomatini olish' })
   @ApiQuery({ name: 'date', required: true, description: 'Sana (YYYY-MM-DD)' })
   getGroupAttendance(

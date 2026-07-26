@@ -17,6 +17,11 @@ export class CreateTeacherDto {
   @IsString({ message: 'Telefon raqami matn bo\'lishi shart' })
   phone: string;
 
+  @ApiProperty({ description: 'Qo\'shimcha telefon raqami (ixtiyoriy)', example: '+998909998877', required: false })
+  @IsOptional()
+  @IsString()
+  secondPhone?: string;
+
   @ApiProperty({ description: 'Fani yoki yo\'nalishi', example: 'Ingliz tili' })
   @IsNotEmpty({ message: 'Fan nomi kiritilishi shart' })
   @IsString({ message: 'Fan nomi matn bo\'lishi shart' })
@@ -38,6 +43,11 @@ export class UpdateTeacherDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @ApiProperty({ description: 'Qo\'shimcha telefon raqami (ixtiyoriy)', example: '+998909998877', required: false })
+  @IsOptional()
+  @IsString()
+  secondPhone?: string;
 
   @ApiProperty({ description: 'Fani yoki yo\'nalishi', example: 'Ingliz tili', required: false })
   @IsOptional()

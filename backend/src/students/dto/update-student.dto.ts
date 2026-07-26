@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateStudentDto {
@@ -17,6 +17,11 @@ export class UpdateStudentDto {
   @IsString()
   phone?: string;
 
+  @ApiProperty({ description: 'Qo\'shimcha telefon raqami (ixtiyoriy)', example: '+998909998877', required: false })
+  @IsOptional()
+  @IsString()
+  secondPhone?: string;
+
   @ApiProperty({ description: 'Tug\'ilgan sana', example: '2005-08-15', required: false })
   @IsOptional()
   @IsDateString()
@@ -26,4 +31,9 @@ export class UpdateStudentDto {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @ApiProperty({ description: 'To\'lov holati (oylik to\'lov qilinganmi)', example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  isPaid?: boolean;
 }

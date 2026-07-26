@@ -23,6 +23,7 @@ export const Courses: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Course Modals
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
@@ -79,7 +80,9 @@ export const Courses: React.FC = () => {
 
   const handleSaveCourse = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     try {
+      setSubmitting(true);
       if (editingCourse) {
         await api.put(`/courses/${editingCourse.id}`, courseFormData);
       } else {
@@ -89,6 +92,8 @@ export const Courses: React.FC = () => {
       fetchData();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Kursni saqlashda xatolik');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -129,12 +134,14 @@ export const Courses: React.FC = () => {
 
   const handleSaveGroup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     const payload = {
       ...groupFormData,
       courseId: parseInt(groupFormData.courseId, 10),
       teacherId: parseInt(groupFormData.teacherId, 10),
     };
     try {
+      setSubmitting(true);
       if (editingGroup) {
         await api.put(`/groups/${editingGroup.id}`, payload);
       } else {
@@ -144,6 +151,8 @@ export const Courses: React.FC = () => {
       fetchData();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Guruhni saqlashda xatolik');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -374,11 +383,12 @@ export const Courses: React.FC = () => {
                   >
                     Bekor qilish
                   </button>
-                  <button
+                   <button
                     type="submit"
-                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
+                    disabled={submitting}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-850 disabled:text-gray-400 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
                   >
-                    Saqlash
+                    {submitting ? "Saqlanmoqda..." : "Saqlash"}
                   </button>
                 </div>
               </form>
@@ -472,11 +482,12 @@ export const Courses: React.FC = () => {
                   >
                     Bekor qilish
                   </button>
-                  <button
+                   <button
                     type="submit"
-                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
+                    disabled={submitting}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-850 disabled:text-gray-400 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
                   >
-                    Saqlash
+                    {submitting ? "Saqlanmoqda..." : "Saqlash"}
                   </button>
                 </div>
               </form>

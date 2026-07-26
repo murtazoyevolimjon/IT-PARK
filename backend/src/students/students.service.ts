@@ -8,8 +8,18 @@ export class StudentsService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(status?: string) {
+    let whereClause: any = undefined;
+    if (status === 'unpaid') {
+      whereClause = {
+        isPaid: false,
+        status: 'ACTIVE',
+      };
+    } else if (status) {
+      whereClause = { status };
+    }
+
     return this.prisma.student.findMany({
-      where: status ? { status } : undefined,
+      where: whereClause,
       orderBy: { joinedAt: 'desc' },
       include: {
         groups: {
@@ -46,14 +56,16 @@ export class StudentsService {
   }
 
   async create(createStudentDto: CreateStudentDto) {
-    const { firstName, lastName, phone, birthDate, status } = createStudentDto;
+    const { firstName, lastName, phone, secondPhone, birthDate, status, isPaid } = createStudentDto;
     return this.prisma.student.create({
       data: {
         firstName,
         lastName,
         phone,
+        secondPhone,
         birthDate: birthDate ? new Date(birthDate) : null,
         status: status || 'ACTIVE',
+        isPaid: isPaid !== undefined ? isPaid : true,
       },
     });
   }
@@ -62,7 +74,7 @@ export class StudentsService {
     // Check existence
     await this.findOne(id);
 
-    const { firstName, lastName, phone, birthDate, status } = updateStudentDto;
+    const { firstName, lastName, phone, secondPhone, birthDate, status, isPaid } = updateStudentDto;
 
     // If status is updated to INACTIVE, remove student from all groups
     if (status === 'INACTIVE') {
@@ -77,8 +89,10 @@ export class StudentsService {
         firstName,
         lastName,
         phone,
+        secondPhone,
         birthDate: birthDate ? new Date(birthDate) : undefined,
         status,
+        isPaid,
       },
     });
   }

@@ -11,9 +11,11 @@ import { GroupsModule } from './groups/groups.module';
 import { SchedulesModule } from './schedule/schedule.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     StudentsModule,

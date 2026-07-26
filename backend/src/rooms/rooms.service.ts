@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoomDto, UpdateRoomDto } from './dto/create-room.dto';
 
@@ -66,8 +66,17 @@ export class RoomsService {
 
   async remove(id: number) {
     await this.findOne(id);
-    return this.prisma.room.delete({
-      where: { id },
-    });
+    try {
+      return await this.prisma.room.delete({
+        where: { id },
+      });
+    } catch (error: any) {
+      if (error.code === 'P2003') {
+        throw new BadRequestException(
+          'Ushbu xonada dars jadvallari mavjud. O\'chirishdan oldin dars jadvallarini o\'chiring yoki boshqa xonaga o\'tkazing.'
+        );
+      }
+      throw error;
+    }
   }
 }

@@ -17,6 +17,7 @@ export const Teachers: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,6 +28,7 @@ export const Teachers: React.FC = () => {
     firstName: '',
     lastName: '',
     phone: '',
+    secondPhone: '',
     subject: '',
   });
 
@@ -54,6 +56,7 @@ export const Teachers: React.FC = () => {
       firstName: '',
       lastName: '',
       phone: '+998',
+      secondPhone: '',
       subject: '',
     });
     setIsModalOpen(true);
@@ -65,6 +68,7 @@ export const Teachers: React.FC = () => {
       firstName: teacher.firstName,
       lastName: teacher.lastName,
       phone: teacher.phone,
+      secondPhone: teacher.secondPhone || '',
       subject: teacher.subject,
     });
     setIsModalOpen(true);
@@ -72,7 +76,9 @@ export const Teachers: React.FC = () => {
 
   const handleSaveTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     try {
+      setSubmitting(true);
       if (editingTeacher) {
         await api.put(`/teachers/${editingTeacher.id}`, formData);
       } else {
@@ -82,6 +88,8 @@ export const Teachers: React.FC = () => {
       fetchTeachers();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Saqlashda xatolik yuz berdi');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -181,10 +189,18 @@ export const Teachers: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-4 px-6 font-medium text-gray-300">
-                        <span className="flex items-center gap-1.5">
-                          <Phone size={13} className="text-gray-500" />
-                          <span>{teacher.phone}</span>
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className="flex items-center gap-1.5">
+                            <Phone size={13} className="text-gray-500" />
+                            <span>{teacher.phone}</span>
+                          </span>
+                          {teacher.secondPhone && (
+                            <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                              <Phone size={11} className="text-gray-600" />
+                              <span>{teacher.secondPhone}</span>
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-4 px-6 font-medium text-gray-300">
                         {teacher.groups?.length || 0} ta guruh
@@ -269,6 +285,17 @@ export const Teachers: React.FC = () => {
                 </div>
 
                 <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Qo'shimcha telefon raqami (Ixtiyoriy)</label>
+                  <input
+                    type="text"
+                    value={formData.secondPhone}
+                    onChange={(e) => setFormData({...formData, secondPhone: e.target.value})}
+                    placeholder="+998909998877"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm glass-input"
+                  />
+                </div>
+
+                <div>
                   <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Mutaxassisligi (Fan)</label>
                   <input
                     type="text"
@@ -288,11 +315,12 @@ export const Teachers: React.FC = () => {
                   >
                     Bekor qilish
                   </button>
-                  <button
+                   <button
                     type="submit"
-                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
+                    disabled={submitting}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-850 disabled:text-gray-400 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
                   >
-                    Saqlash
+                    {submitting ? "Saqlanmoqda..." : "Saqlash"}
                   </button>
                 </div>
               </form>

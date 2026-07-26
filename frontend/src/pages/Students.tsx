@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../utils/api';
 import { Header } from '../components/Header';
 import { 
@@ -15,12 +16,14 @@ import {
 } from 'lucide-react';
 
 export const Students: React.FC = () => {
+  const location = useLocation();
   const [students, setStudents] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Modals state
   const [isCrudModalOpen, setIsCrudModalOpen] = useState(false);
@@ -33,15 +36,18 @@ export const Students: React.FC = () => {
     firstName: '',
     lastName: '',
     phone: '',
+    secondPhone: '',
     birthDate: '',
     status: 'ACTIVE',
+    isPaid: true,
   });
   
   const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
 
-  const fetchStudents = async () => {
+  const fetchStudents = async (statusVal?: string) => {
     try {
-      const response = await api.get('/students');
+      const url = statusVal ? `/students?status=${statusVal}` : '/students';
+      const response = await api.get(url);
       setStudents(response.data);
     } catch (err: any) {
       setError('O\'quvchilar ro\'yxatini yuklashda xatolik yuz berdi.');
@@ -58,13 +64,19 @@ export const Students: React.FC = () => {
   };
 
   useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const statusParam = queryParams.get('status') || '';
+    setStatusFilter(statusParam);
+  }, [location.search]);
+
+  useEffect(() => {
     const init = async () => {
       setLoading(true);
-      await Promise.all([fetchStudents(), fetchGroups()]);
+      await Promise.all([fetchStudents(statusFilter), fetchGroups()]);
       setLoading(false);
     };
     init();
-  }, []);
+  }, [statusFilter]);
 
   const handleOpenCreate = () => {
     setEditingStudent(null);
@@ -72,8 +84,10 @@ export const Students: React.FC = () => {
       firstName: '',
       lastName: '',
       phone: '+998',
+      secondPhone: '',
       birthDate: '',
       status: 'ACTIVE',
+      isPaid: true,
     });
     setIsCrudModalOpen(true);
   };
@@ -84,8 +98,10 @@ export const Students: React.FC = () => {
       firstName: student.firstName,
       lastName: student.lastName,
       phone: student.phone,
+      secondPhone: student.secondPhone || '',
       birthDate: student.birthDate ? student.birthDate.split('T')[0] : '',
       status: student.status,
+      isPaid: student.isPaid ?? true,
     });
     setIsCrudModalOpen(true);
   };
@@ -100,7 +116,9 @@ export const Students: React.FC = () => {
 
   const handleSaveStudent = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     try {
+      setSubmitting(true);
       if (editingStudent) {
         await api.put(`/students/${editingStudent.id}`, formData);
       } else {
@@ -110,6 +128,8 @@ export const Students: React.FC = () => {
       fetchStudents();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Saqlashda xatolik yuz berdi');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -157,7 +177,13 @@ export const Students: React.FC = () => {
     const query = searchQuery.toLowerCase();
     
     const matchesSearch = fullName.includes(query) || phone.includes(query);
-    const matchesStatus = statusFilter ? student.status === statusFilter : true;
+    
+    let matchesStatus = true;
+    if (statusFilter === 'unpaid') {
+      matchesStatus = !student.isPaid && student.status === 'ACTIVE';
+    } else if (statusFilter) {
+      matchesStatus = student.status === statusFilter;
+    }
     
     return matchesSearch && matchesStatus;
   });
@@ -193,6 +219,7 @@ export const Students: React.FC = () => {
               <option value="">Barcha statuslar</option>
               <option value="ACTIVE">Faol</option>
               <option value="INACTIVE">Nofaol</option>
+              <option value="unpaid">To'lov qilmaganlar</option>
             </select>
           </div>
 
@@ -241,13 +268,28 @@ export const Students: React.FC = () => {
                   {filteredStudents.map((student) => (
                     <tr key={student.id} className="hover:bg-gray-800/20 transition-all">
                       <td className="py-4 px-6 font-semibold text-white">
-                        {student.firstName} {student.lastName}
+                        <div className="flex flex-col">
+                          <span>{student.firstName} {student.lastName}</span>
+                          {!student.isPaid && (
+                            <span className="inline-flex w-max items-center mt-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-red-950/40 text-red-400 border border-red-900/40">
+                              To'lov qilinmagan
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-4 px-6 font-medium text-gray-300">
-                        <span className="flex items-center gap-1.5">
-                          <Phone size={13} className="text-gray-500" />
-                          <span>{student.phone}</span>
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className="flex items-center gap-1.5">
+                            <Phone size={13} className="text-gray-500" />
+                            <span>{student.phone}</span>
+                          </span>
+                          {student.secondPhone && (
+                            <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                              <Phone size={11} className="text-gray-600" />
+                              <span>{student.secondPhone}</span>
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-4 px-6">
                         {student.birthDate ? (
@@ -378,6 +420,17 @@ export const Students: React.FC = () => {
                   />
                 </div>
 
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Qo'shimcha telefon raqami (Ixtiyoriy)</label>
+                  <input
+                    type="text"
+                    value={formData.secondPhone}
+                    onChange={(e) => setFormData({...formData, secondPhone: e.target.value})}
+                    placeholder="+998909998877"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm glass-input"
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Tug'ilgan sana</label>
@@ -401,6 +454,19 @@ export const Students: React.FC = () => {
                   </div>
                 </div>
 
+                <div className="flex items-center gap-3 py-2 px-3 bg-gray-800/10 border border-gray-800/40 rounded-xl">
+                  <input
+                    id="isPaidCheckbox"
+                    type="checkbox"
+                    checked={formData.isPaid}
+                    onChange={(e) => setFormData({...formData, isPaid: e.target.checked})}
+                    className="w-4 h-4 text-indigo-600 border-gray-700 bg-gray-900 rounded focus:ring-indigo-500 focus:ring-offset-gray-900 cursor-pointer"
+                  />
+                  <label htmlFor="isPaidCheckbox" className="text-sm font-semibold text-gray-300 cursor-pointer select-none">
+                    Oylik to'lov qilingan
+                  </label>
+                </div>
+
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-800/60 mt-6">
                   <button
                     type="button"
@@ -409,11 +475,12 @@ export const Students: React.FC = () => {
                   >
                     Bekor qilish
                   </button>
-                  <button
+                   <button
                     type="submit"
-                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
+                    disabled={submitting}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-850 disabled:text-gray-400 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
                   >
-                    Saqlash
+                    {submitting ? "Saqlanmoqda..." : "Saqlash"}
                   </button>
                 </div>
               </form>

@@ -12,6 +12,12 @@ export class DashboardService {
     const teachers = await this.prisma.teacher.count();
     const groups = await this.prisma.group.count();
     const rooms = await this.prisma.room.count();
+    const unpaidActiveStudents = await this.prisma.student.count({
+      where: {
+        status: 'ACTIVE',
+        isPaid: false,
+      },
+    });
 
     // 2. Today's schedules
     const weekdayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
@@ -105,7 +111,8 @@ export class DashboardService {
         teachers,
         groups,
         rooms,
-        globalAttendanceRate: attendancePercentage
+        globalAttendanceRate: attendancePercentage,
+        unpaidActiveStudents,
       },
       todaySchedules,
       attendanceTrend,

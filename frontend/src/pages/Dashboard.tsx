@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { Header } from '../components/Header';
 import { 
@@ -38,6 +39,7 @@ ChartJS.register(
 );
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -164,26 +166,25 @@ export const Dashboard: React.FC = () => {
           })}
         </div>
 
-        {/* Attendance Rate Banner */}
-        <div className="glass-card rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 border-gray-800/60 glow-primary">
+        {/* Unpaid Students Metric Card */}
+        <div 
+          onClick={() => navigate('/students?status=unpaid')}
+          className="glass-card rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 border-gray-800/60 glow-primary cursor-pointer hover:bg-gray-800/10 transition-all duration-300"
+        >
           <div className="space-y-1 text-center md:text-left">
             <h3 className="text-lg font-bold text-white flex items-center gap-2 justify-center md:justify-start">
-              <TrendingUp className="text-indigo-400" size={20} />
-              <span>O'rtacha davomat ko'rsatkichi</span>
+              <TrendingUp className="text-red-400" size={20} />
+              <span>To'lov qilmagan o'quvchilar soni</span>
             </h3>
-            <p className="text-sm text-gray-400">Markaz bo'yicha so'nggi 7 kundagi umumiy davomat darajasi</p>
+            <p className="text-sm text-gray-400">Joriy oy uchun to'lovi amalga oshirilmagan faol o'quvchilar soni (barcha ro'yxatni ko'rish uchun ustiga bosing)</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <span className="text-4xl font-black text-white">{stats.globalAttendanceRate}%</span>
-              <p className="text-xs text-emerald-400 font-semibold mt-0.5">Kelish darajasi a'lo</p>
+              <span className="text-4xl font-black text-white">{stats.unpaidActiveStudents || 0}</span>
+              <p className="text-xs text-red-400 font-semibold mt-0.5">Ta'sirchan ko'rsatkich</p>
             </div>
-            <div className="w-16 h-16 rounded-full border-4 border-gray-800 flex items-center justify-center relative overflow-hidden">
-              <div 
-                className="absolute bottom-0 left-0 right-0 bg-indigo-600/80 transition-all duration-1000" 
-                style={{ height: `${stats.globalAttendanceRate}%` }}
-              ></div>
-              <span className="relative z-10 text-xs font-bold text-white">{stats.globalAttendanceRate}%</span>
+            <div className="w-16 h-16 rounded-full border-4 border-red-950/40 bg-red-950/20 flex items-center justify-center relative overflow-hidden">
+              <Users size={24} className="text-red-400" />
             </div>
           </div>
         </div>
