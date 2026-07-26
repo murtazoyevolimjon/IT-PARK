@@ -9,22 +9,23 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // 1. Enable CORS for React frontend with explicit OPTIONS preflight support
+  // 1. Enable robust CORS configuration for React frontend
   app.enableCors({
-    origin: true,
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    origin: true, // Dynamically allow request origins (including Vercel deployments)
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Requested-With',
-      'Accept',
       'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
       'Access-Control-Allow-Headers',
       'Access-Control-Request-Method',
       'Access-Control-Request-Headers'
     ],
     credentials: true,
-    optionsSuccessStatus: 200,
+    preflightContinue: false,
+    optionsSuccessStatus: 200, // Return 200 OK for OPTIONS preflight
   });
 
   // 2. Set global prefix
