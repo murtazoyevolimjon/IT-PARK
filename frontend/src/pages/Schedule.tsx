@@ -54,7 +54,7 @@ export const Schedule: React.FC<ScheduleProps> = ({ onOpenMobileMenu }) => {
     try {
       const [rRes, gRes] = await Promise.all([
         api.get('/rooms'),
-        api.get('/courses/groups')
+        api.get('/groups')
       ]);
       setRooms(rRes.data);
       setGroups(gRes.data);

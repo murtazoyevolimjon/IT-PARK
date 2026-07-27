@@ -65,7 +65,7 @@ export const Students: React.FC<StudentsProps> = ({ onOpenMobileMenu }) => {
 
   const fetchGroups = async () => {
     try {
-      const response = await api.get('/courses/groups');
+      const response = await api.get('/groups');
       setGroups(response.data);
     } catch (err: any) {
       console.error(err);

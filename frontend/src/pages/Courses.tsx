@@ -49,7 +49,7 @@ export const Courses: React.FC<CoursesProps> = ({ onOpenMobileMenu }) => {
     try {
       const [cRes, gRes, tRes] = await Promise.all([
         api.get('/courses'),
-        api.get('/courses/groups'),
+        api.get('/groups'),
         api.get('/teachers'),
       ]);
       setCourses(cRes.data);
@@ -150,9 +150,9 @@ export const Courses: React.FC<CoursesProps> = ({ onOpenMobileMenu }) => {
       };
 
       if (editingGroup) {
-        await api.put(`/courses/groups/${editingGroup.id}`, payload);
+        await api.put(`/groups/${editingGroup.id}`, payload);
       } else {
-        await api.post('/courses/groups', payload);
+        await api.post('/groups', payload);
       }
       setIsGroupModalOpen(false);
       fetchData();
@@ -166,7 +166,7 @@ export const Courses: React.FC<CoursesProps> = ({ onOpenMobileMenu }) => {
   const handleDeleteGroup = async (id: number) => {
     if (!confirm('Haqiqatan ham ushbu guruhni o\'chirib tashlamoqchimisiz?')) return;
     try {
-      await api.delete(`/courses/groups/${id}`);
+      await api.delete(`/groups/${id}`);
       fetchData();
     } catch (err: any) {
       alert(err.response?.data?.message || 'O\'chirishda xatolik yuz berdi');

@@ -32,7 +32,7 @@ export const Attendance: React.FC<AttendanceProps> = ({ onOpenMobileMenu }) => {
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const response = await api.get('/courses/groups');
+        const response = await api.get('/groups');
         setGroups(response.data);
         if (response.data.length > 0) {
           setSelectedGroupId(String(response.data[0].id));

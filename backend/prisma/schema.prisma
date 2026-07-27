@@ -8,6 +8,7 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
 model User {
   id           Int      @id @default(autoincrement())
   name         String
@@ -17,17 +18,21 @@ model User {
 }
 
 model Student {
-  id          Int            @id @default(autoincrement())
-  firstName   String
-  lastName    String
-  phone       String
-  secondPhone String?
-  birthDate   DateTime?
-  joinedAt    DateTime       @default(now())
-  status      String         @default("ACTIVE") // "ACTIVE", "INACTIVE"
-  isPaid      Boolean        @default(true)
-  groups      GroupStudent[]
-  attendances Attendance[]
+  id                Int                      @id @default(autoincrement())
+  firstName         String
+  lastName          String
+  phone             String
+  secondPhone       String?
+  birthDate         DateTime?
+  joinedAt          DateTime                 @default(now())
+  status            String                   @default("ACTIVE") // "ACTIVE", "INACTIVE", "ARCHIVED"
+  isPaid            Boolean                  @default(true)
+  isArchived        Boolean                  @default(false)
+  archivedAt        DateTime?
+  archiveReason     String?
+  groups            GroupStudent[]
+  attendances       Attendance[]
+  enrollmentHistory StudentEnrollmentHistory[]
 }
 
 model Teacher {
@@ -77,6 +82,21 @@ model GroupStudent {
   student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@id([groupId, studentId])
+}
+
+// Historical record for student group enrollments and course completions
+model StudentEnrollmentHistory {
+  id         Int       @id @default(autoincrement())
+  studentId  Int
+  groupId    Int?
+  groupName  String
+  courseName String
+  enrolledAt DateTime  @default(now())
+  leftAt     DateTime?
+  status     String    @default("hozir ham o'qimoqda") // "hozir ham o'qimoqda", "kursni tugatdi", "o'z xohishi bilan chiqdi", "arxivlandi"
+  student    Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
 }
 
 model Schedule {
