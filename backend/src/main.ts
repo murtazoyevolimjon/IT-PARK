@@ -5,11 +5,15 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AllExceptionsFilter } from './common/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // 1. Enable robust CORS configuration for React frontend
+  // 1. Global Exception Filter to guarantee JSON responses on all errors
+  app.useGlobalFilters(new AllExceptionsFilter());
+
+  // 2. Enable robust CORS configuration for React frontend
   app.enableCors({
     origin: true, // Dynamically allow request origins (including Vercel deployments)
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
