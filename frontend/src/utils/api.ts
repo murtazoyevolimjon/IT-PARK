@@ -1,33 +1,17 @@
 import axios from 'axios';
 
 const getApiBaseUrl = (): string => {
-  let envUrl = import.meta.env.VITE_API_URL;
-  
-  if (!envUrl) {
-    // In production (Vercel domain), fallback to relative '/api' so Vercel rewrites proxy it directly to AWS
-    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+  // Always use relative '/api' in non-localhost browser environments to avoid
+  // Mixed Content (HTTPS -> HTTP) and route through Vercel Serverless Functions
+  if (typeof window !== 'undefined') {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isLocalhost) {
       return '/api';
     }
-    return 'http://localhost:3000/api';
   }
 
-  // Sanitize: trim whitespace
-  envUrl = envUrl.trim();
-
-  // If envUrl is relative path "/api" or "/api/"
-  if (envUrl === '/api' || envUrl === '/api/') {
-    return '/api';
-  }
-
-  // Strip trailing slashes
-  envUrl = envUrl.replace(/\/+$/, '');
-
-  // Ensure /api suffix is present if not already ending with /api
-  if (!envUrl.endsWith('/api')) {
-    envUrl = `${envUrl}/api`;
-  }
-
-  return envUrl;
+  // Fallback for local development
+  return import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 };
 
 const api = axios.create({
